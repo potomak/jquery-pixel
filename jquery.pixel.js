@@ -1,7 +1,8 @@
 var pixel = function() {
-  var canvas = null,
+  var matrix = [],
+      canvas = null,
       ctx = null,
-      draw = false,
+      drawing = false,
       action = "pixel",
       pixelSize = 20,
       pixelColor = "#00ff00",
@@ -12,6 +13,10 @@ var pixel = function() {
   var init = function(aCanvas) {
     canvas = aCanvas;
     ctx = aCanvas.getContext("2d");
+    
+    for(var i = 0; i < size/pixelSize; i++) {
+      matrix.push(new Array(size/pixelSize));
+    }
     
     initCanvas();
   }
@@ -28,7 +33,7 @@ var pixel = function() {
   }
   
   var setDraw = function(wantToDraw) {
-    draw = wantToDraw;
+    drawing = wantToDraw;
   }
   
   var setAction = function(wantedAction) {
@@ -41,7 +46,7 @@ var pixel = function() {
   }
   
   var doAction = function(x, y) {
-    if(draw) {
+    if(drawing) {
       switch(action) {
         case "pixel":
           drawPixel(x, y);
@@ -55,37 +60,26 @@ var pixel = function() {
     }
   }
   
-  var pad = function(number, length) {
-    var str = '' + number;
-    while (str.length < length) {
-        str = '0' + str;
-    }
-    
-    return str;
-  }
-  
   var pixelify = function(val) {
-    return Math.floor(val/pixelSize)*pixelSize;
-  }
-  
-  var fillRect = function(x, y) {
-    ctx.fillRect(pixelify(x), pixelify(y), pixelSize, pixelSize);
+    var i = Math.floor(val/pixelSize);
+    
+    i >= matrix.length && (i = matrix.length-1);
+    i <= 0 && (i = 0);
+    
+    return i;
   }
 
   var drawPixel = function(x, y) {
-    fillRect(x, y);
+    matrix[pixelify(x)][pixelify(y)] = pixelColor;
+    
+    draw();
     drawGrid();
   }
   
   var getPixelColor = function(x, y) {
-    var pixelData = ctx.getImageData(x, y, 1, 1).data,
-        color = "";
+    var pixelData = matrix[pixelify(x)][pixelify(y)];
     
-    for(var i = 0; i < 3; i++) {
-      color += pad(pixelData[i].toString(16), 2);
-    }
-    
-    return "#" + color;
+    return "rgba(0, 0, 0, 0)" == pixelData ? "#ffffff" : pixelData;
   }
   
   var fillPixels = function(x, y) {
@@ -97,15 +91,15 @@ var pixel = function() {
     }
     console.log("flood fill time: " + ((new Date()).getTime()-start));
     
+    draw();
     drawGrid();
   }
   
   var fillPixel = function(x, y, startColor) {
     var color = getPixelColor(x, y);
-    //console.log([color, x, y]);
     
     if(color == startColor && x > 0 && y > 0 && x < size && y < size) {
-      fillRect(x, y);
+      matrix[pixelify(x)][pixelify(y)] = pixelColor;
       
       fillPixel(x+pixelSize, y, startColor);
       fillPixel(x-pixelSize, y, startColor);
@@ -134,12 +128,31 @@ var pixel = function() {
   }
   
   var drawBackground = function() {
-    ctx.fillStyle = "rgba(0, 0, 0, 0)";
-    ctx.fillRect(0, 0, size, size);
+    for(var i = 0; i < matrix.length; i++) {
+      for(var j = 0; j < matrix[i].length; j++) {
+        matrix[i][j] = "rgba(0, 0, 0, 0)";
+      }
+    }
+    
+    draw();
   }
   
   var getDataURL = function() {
     return canvas.toDataURL("image/png");
+  }
+  
+  var draw = function() {
+    canvas.width = canvas.width;
+    
+    for(var i = 0; i < matrix.length; i++) {
+      for(var j = 0; j < matrix[i].length; j++) {
+        ctx.fillStyle = matrix[i][j];
+        ctx.fillRect(i*pixelSize, j*pixelSize, pixelSize, pixelSize);
+      }
+    }
+    
+    // reset to current fill style
+    ctx.fillStyle = pixelColor;
   }
   
   return {
