@@ -9,7 +9,9 @@ var pixel = function() {
       gridColor = "#eeeeee",
       showGrid = false,
       history = {
+        action: [],
         undo: [],
+        oldUndo: [],
         redo: []
       };
   
@@ -25,6 +27,13 @@ var pixel = function() {
   }
   
   var initCanvas = function() {
+    history = {
+      action: [],
+      undo: [],
+      oldUndo: [],
+      redo: []
+    };
+    
     drawBackground();
     drawGrid();
   }
@@ -42,14 +51,60 @@ var pixel = function() {
     initCanvas();
   }
   
+  var copyMatrix = function() {
+    var copy = matrix.slice();
+    
+    for(var i = 0; i < matrix.length; i++) {
+      copy[i] = matrix[i].slice();
+    }
+    
+    return copy;
+  }
+  
   var doAction = function(x, y, color) {
     if(drawing) {
       switch(action) {
         case "pixel":
-          drawPixel(x, y, color);
+          var startColor = drawPixel(x, y, color);
+          
+          if(startColor != false) {
+            history.undo.push(function() {
+              drawPixel(x, y, startColor);
+            });
+
+            history.action.push(function() {
+              drawPixel(x, y, color);
+            });
+          }
+          
+          break;
+        case "clearPixel":
+          var transparent = "rgba(0, 0, 0, 0)",
+              startColor = drawPixel(x, y, transparent);
+          
+          if(startColor != false) {
+            history.undo.push(function() {
+              drawPixel(x, y, startColor);
+            });
+
+            history.action.push(function() {
+              drawPixel(x, y, transparent);
+            });
+          }
           break;
         case "fill":
-          fillPixels(x, y, color);
+          var startMatrix = fillPixels(x, y, color);
+          
+          if(startColor != false) {
+            history.undo.push(function() {
+              draw(startMatrix);
+            });
+
+            history.action.push(function() {
+              fillPixels(x, y, color)
+            });
+          }
+          
           break;
         default:
           console.log("unknown action:" + action);
@@ -67,10 +122,19 @@ var pixel = function() {
   }
 
   var drawPixel = function(x, y, color) {
-    matrix[pixelify(x)][pixelify(y)] = color;
+    var px = pixelify(x),
+        py = pixelify(y),
+        startColor = matrix[px][py];
     
-    draw();
-    drawGrid();
+    if(startColor != color) {
+      matrix[px][py] = color;
+      draw();
+      drawGrid();
+      
+      return startColor;
+    }
+    
+    return false;
   }
   
   var getPixelColor = function(x, y) {
@@ -82,14 +146,20 @@ var pixel = function() {
   var fillPixels = function(x, y, color) {
     var startColor = getPixelColor(x, y);
     
-    var start = (new Date()).getTime();
     if(startColor != color) {
+      var startMatrix = copyMatrix(matrix),
+          start = (new Date()).getTime();
+          
       fillPixel(x, y, startColor, color);
+      console.log("flood fill time: " + ((new Date()).getTime()-start));
+
+      draw();
+      drawGrid();
+      
+      return startMatrix;
     }
-    console.log("flood fill time: " + ((new Date()).getTime()-start));
     
-    draw();
-    drawGrid();
+    return false;
   }
   
   var fillPixel = function(x, y, startColor, endColor) {
@@ -138,14 +208,40 @@ var pixel = function() {
     return canvas.toDataURL("image/png");
   }
   
-  var draw = function() {
+  var draw = function(m) {
     canvas.width = canvas.width;
     
-    for(var i = 0; i < matrix.length; i++) {
-      for(var j = 0; j < matrix[i].length; j++) {
-        ctx.fillStyle = matrix[i][j];
+    if(typeof m == 'undefined') {
+      m = matrix;
+    }
+    
+    for(var i = 0; i < m.length; i++) {
+      for(var j = 0; j < m[i].length; j++) {
+        ctx.fillStyle = matrix[i][j] = m[i][j];
         ctx.fillRect(i*pixelSize, j*pixelSize, pixelSize, pixelSize);
       }
+    }
+  }
+  
+  var getHistory = function() {
+    return history;
+  }
+  
+  var undo = function() {
+    if(history.undo.length > 0) {
+      var todo = history.undo.pop();
+      todo.call();
+      history.redo.push(history.action.pop());
+      history.oldUndo.push(todo);
+    }
+  }
+  
+  var redo = function() {
+    if(history.redo.length > 0) {
+      var todo = history.redo.pop();
+      todo.call();
+      history.undo.push(history.oldUndo.pop());
+      history.action.push(todo);
     }
   }
   
@@ -155,6 +251,9 @@ var pixel = function() {
     setDraw: setDraw,
     setAction: setAction,
     doAction: doAction,
-    getDataURL: getDataURL
+    getDataURL: getDataURL,
+    getHistory: getHistory,
+    undo: undo,
+    redo: redo
   };
 }();
