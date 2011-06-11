@@ -5,10 +5,13 @@ var pixel = function() {
       drawing = false,
       action = "pixel",
       pixelSize = 20,
-      pixelColor = "#000000",
       size = 320,
       gridColor = "#eeeeee",
-      showGrid = false;
+      showGrid = false,
+      history = {
+        undo: [],
+        redo: []
+      };
   
   var init = function(aCanvas) {
     canvas = aCanvas;
@@ -24,12 +27,6 @@ var pixel = function() {
   var initCanvas = function() {
     drawBackground();
     drawGrid();
-    setPixelStyle(pixelColor);
-  }
-  
-  var setPixelStyle = function(color) {
-    pixelColor = color;
-    ctx.fillStyle = pixelColor;
   }
   
   var setDraw = function(wantToDraw) {
@@ -45,14 +42,14 @@ var pixel = function() {
     initCanvas();
   }
   
-  var doAction = function(x, y) {
+  var doAction = function(x, y, color) {
     if(drawing) {
       switch(action) {
         case "pixel":
-          drawPixel(x, y);
+          drawPixel(x, y, color);
           break;
         case "fill":
-          fillPixels(x, y);
+          fillPixels(x, y, color);
           break;
         default:
           console.log("unknown action:" + action);
@@ -69,25 +66,25 @@ var pixel = function() {
     return i;
   }
 
-  var drawPixel = function(x, y) {
-    matrix[pixelify(x)][pixelify(y)] = pixelColor;
+  var drawPixel = function(x, y, color) {
+    matrix[pixelify(x)][pixelify(y)] = color;
     
     draw();
     drawGrid();
   }
   
   var getPixelColor = function(x, y) {
-    var pixelData = matrix[pixelify(x)][pixelify(y)];
+    var color = matrix[pixelify(x)][pixelify(y)];
     
-    return "rgba(0, 0, 0, 0)" == pixelData ? "#ffffff" : pixelData;
+    return "rgba(0, 0, 0, 0)" == color ? "#ffffff" : color;
   }
   
-  var fillPixels = function(x, y) {
-    var color = getPixelColor(x, y);
+  var fillPixels = function(x, y, color) {
+    var startColor = getPixelColor(x, y);
     
     var start = (new Date()).getTime();
-    if(color != pixelColor) {
-      fillPixel(x, y, color);
+    if(startColor != color) {
+      fillPixel(x, y, startColor, color);
     }
     console.log("flood fill time: " + ((new Date()).getTime()-start));
     
@@ -95,16 +92,16 @@ var pixel = function() {
     drawGrid();
   }
   
-  var fillPixel = function(x, y, startColor) {
+  var fillPixel = function(x, y, startColor, endColor) {
     var color = getPixelColor(x, y);
     
     if(color == startColor && x > 0 && y > 0 && x < size && y < size) {
-      matrix[pixelify(x)][pixelify(y)] = pixelColor;
+      matrix[pixelify(x)][pixelify(y)] = endColor;
       
-      fillPixel(x+pixelSize, y, startColor);
-      fillPixel(x-pixelSize, y, startColor);
-      fillPixel(x, y+pixelSize, startColor);
-      fillPixel(x, y-pixelSize, startColor);
+      fillPixel(x+pixelSize, y, startColor, endColor);
+      fillPixel(x-pixelSize, y, startColor, endColor);
+      fillPixel(x, y+pixelSize, startColor, endColor);
+      fillPixel(x, y-pixelSize, startColor, endColor);
     }
   }
 
@@ -150,9 +147,6 @@ var pixel = function() {
         ctx.fillRect(i*pixelSize, j*pixelSize, pixelSize, pixelSize);
       }
     }
-    
-    // reset to current fill style
-    ctx.fillStyle = pixelColor;
   }
   
   return {
@@ -160,7 +154,6 @@ var pixel = function() {
     clearCanvas: clearCanvas,
     setDraw: setDraw,
     setAction: setAction,
-    setPixelStyle: setPixelStyle,
     doAction: doAction,
     getDataURL: getDataURL
   };
