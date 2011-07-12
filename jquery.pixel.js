@@ -1,5 +1,9 @@
 var pixel = function() {
   var matrix = [],
+      frames = [],
+      animation = null,
+      currentFrame = 0,
+      onionFrame = null,
       canvas = null,
       ctx = null,
       drawing = false,
@@ -19,11 +23,22 @@ var pixel = function() {
     canvas = aCanvas;
     ctx = aCanvas.getContext("2d");
     
+    initMatrix();
+    initCanvas();
+  }
+  
+  var initMatrix = function() {
+    matrix = [];
+    
     for(var i = 0; i < size/pixelSize; i++) {
       matrix.push(new Array(size/pixelSize));
     }
     
-    initCanvas();
+    for(var i = 0; i < matrix.length; i++) {
+      for(var j = 0; j < matrix[i].length; j++) {
+        matrix[i][j] = "rgba(0, 0, 0, 0)";
+      }
+    }
   }
   
   var initCanvas = function() {
@@ -34,8 +49,7 @@ var pixel = function() {
       redo: []
     };
     
-    drawBackground();
-    drawGrid();
+    draw();
   }
   
   var setDraw = function(wantToDraw) {
@@ -48,17 +62,21 @@ var pixel = function() {
   
   var clearCanvas = function() {
     canvas.width = canvas.width;
+    frames[currentFrame] = null;
+    initMatrix();
     initCanvas();
   }
   
-  var copyMatrix = function() {
-    var copy = matrix.slice();
-    
-    for(var i = 0; i < matrix.length; i++) {
-      copy[i] = matrix[i].slice();
+  var copyMatrix = function(m) {
+    if(typeof m != 'undefined') {
+      var copy = m.slice();
+
+      for(var i = 0; i < m.length; i++) {
+        copy[i] = m[i].slice();
+      }
+
+      return copy;
     }
-    
-    return copy;
   }
   
   var doAction = function(x, y, color) {
@@ -129,7 +147,6 @@ var pixel = function() {
     if(startColor != color) {
       matrix[px][py] = color;
       draw();
-      drawGrid();
       
       return startColor;
     }
@@ -154,7 +171,6 @@ var pixel = function() {
       console.log("flood fill time: " + ((new Date()).getTime()-start));
 
       draw();
-      drawGrid();
       
       return startMatrix;
     }
@@ -194,16 +210,6 @@ var pixel = function() {
     }
   }
   
-  var drawBackground = function() {
-    for(var i = 0; i < matrix.length; i++) {
-      for(var j = 0; j < matrix[i].length; j++) {
-        matrix[i][j] = "rgba(0, 0, 0, 0)";
-      }
-    }
-    
-    draw();
-  }
-  
   var getDataURL = function() {
     return canvas.toDataURL("image/png");
   }
@@ -215,12 +221,28 @@ var pixel = function() {
       m = matrix;
     }
     
+    if(onionFrame != null && typeof frames[onionFrame] != 'undefined') {
+      for(var i = 0; i < frames[onionFrame].length; i++) {
+        for(var j = 0; j < frames[onionFrame][i].length; j++) {
+          c = frames[onionFrame][i][j];
+          if(c != "rgba(0, 0, 0, 0)") {
+            components = c.match(/#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})/);
+            c = "rgba(" + new Number("0x" + components[1]) + ", " + new Number("0x" + components[2]) + ", " + new Number("0x" + components[3]) + ", 0.5)";
+          }
+          ctx.fillStyle = c;
+          ctx.fillRect(i*pixelSize, j*pixelSize, pixelSize, pixelSize);
+        }
+      }
+    }
+    
     for(var i = 0; i < m.length; i++) {
       for(var j = 0; j < m[i].length; j++) {
         ctx.fillStyle = matrix[i][j] = m[i][j];
         ctx.fillRect(i*pixelSize, j*pixelSize, pixelSize, pixelSize);
       }
     }
+    
+    drawGrid();
   }
   
   var getHistory = function() {
@@ -245,6 +267,56 @@ var pixel = function() {
     }
   }
   
+  var getFrame = function(frame) {
+    return currentFrame == frame ? matrix : frames[frame];
+  }
+  
+  var getCurrentFrame = function() {
+    return matrix;
+  }
+  
+  var getCurrentFrameId = function() {
+    return currentFrame;
+  }
+  
+  var setCurrentFrame = function(frame) {
+    if(frame != currentFrame) {
+      frames[currentFrame] = copyMatrix(matrix);
+      matrix = copyMatrix(frames[frame]);
+
+      // initialize matrix
+      typeof matrix == 'undefined' && initMatrix();
+      
+      currentFrame = frame;
+
+      initCanvas();
+    }
+  }
+  
+  var setOnionFrame = function(frame) {
+    onionFrame = frame;
+    draw();
+  }
+  
+  var getCurrentOnionFrameId = function() {
+    return onionFrame;
+  }
+  
+  var play = function(fps, callback) {
+    if(frames.length > 1) {
+      animation = setInterval(function() {
+        activeFrame = (currentFrame+1)%frames.length;
+        setCurrentFrame(activeFrame);
+        callback(activeFrame);
+      }, (1/fps)*1000);
+    }
+  }
+  
+  var stop = function() {
+    clearInterval(animation);
+    animation = null;
+  }
+  
   return {
     init: init,
     clearCanvas: clearCanvas,
@@ -254,6 +326,14 @@ var pixel = function() {
     getDataURL: getDataURL,
     getHistory: getHistory,
     undo: undo,
-    redo: redo
+    redo: redo,
+    getFrame: getFrame,
+    setCurrentFrame: setCurrentFrame,
+    setOnionFrame: setOnionFrame,
+    getCurrentOnionFrameId: getCurrentOnionFrameId,
+    getCurrentFrame: getCurrentFrame,
+    getCurrentFrameId: getCurrentFrameId,
+    play: play,
+    stop: stop
   };
 }();
