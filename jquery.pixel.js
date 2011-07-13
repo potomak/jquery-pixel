@@ -221,7 +221,7 @@ var pixel = function() {
       m = matrix;
     }
     
-    if(onionFrame != null && typeof frames[onionFrame] != 'undefined') {
+    if(onionFrame != null && typeof frames[onionFrame] != 'undefined' && frames[onionFrame] != null) {
       for(var i = 0; i < frames[onionFrame].length; i++) {
         for(var j = 0; j < frames[onionFrame][i].length; j++) {
           c = frames[onionFrame][i][j];
