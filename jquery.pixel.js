@@ -1,5 +1,6 @@
 var pixel = function() {
-  var matrix = [],
+  var debug = false,
+      matrix = [],
       frames = [],
       animation = null,
       currentFrame = 0,
@@ -19,9 +20,10 @@ var pixel = function() {
         redo: []
       };
   
-  var init = function(aCanvas) {
+  var init = function(aCanvas, aDebug) {
     canvas = aCanvas;
     ctx = aCanvas.getContext("2d");
+    typeof aDebug != 'undefined' ? debug = aDebug : null;
     
     initMatrix();
     initCanvas();
@@ -50,6 +52,10 @@ var pixel = function() {
     };
     
     draw();
+  }
+  
+  var log = function(obj) {
+    debug && console.log([(new Date()).toString(), obj]);
   }
   
   var setDraw = function(wantToDraw) {
@@ -125,7 +131,7 @@ var pixel = function() {
           
           break;
         default:
-          console.log("unknown action:" + action);
+          log("unknown action:" + action);
       }
     }
   }
@@ -168,7 +174,7 @@ var pixel = function() {
           start = (new Date()).getTime();
           
       fillPixel(x, y, startColor, color);
-      console.log("flood fill time: " + ((new Date()).getTime()-start));
+      log("flood fill time: " + ((new Date()).getTime()-start));
 
       draw();
       
@@ -280,6 +286,8 @@ var pixel = function() {
   }
   
   var setCurrentFrame = function(frame) {
+    log("setCurrentFrame: " + frame);
+    
     if(frame != currentFrame) {
       frames[currentFrame] = copyMatrix(matrix);
       matrix = copyMatrix(frames[frame]);
