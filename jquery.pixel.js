@@ -292,12 +292,19 @@ var pixel = function() {
       frames[currentFrame] = copyMatrix(matrix);
       matrix = copyMatrix(frames[frame]);
 
-      // initialize matrix
-      typeof matrix == 'undefined' && initMatrix();
+      // a new frame
+      if(typeof matrix == 'undefined') {
+        // set current frame placeholder
+        frames[frame] = null;
+        // initialize matrix
+        initMatrix();
+      }
       
       currentFrame = frame;
 
       initCanvas();
+      
+      log("setCurrentFrame - frames.length: " + frames.length);
     }
   }
   
@@ -310,16 +317,19 @@ var pixel = function() {
     return onionFrame;
   }
   
+  // play animation at `fps` frames per second
   var play = function(fps, callback) {
     if(frames.length > 1) {
       animation = setInterval(function() {
         activeFrame = (currentFrame+1)%frames.length;
+        log(["play animation", "activeFrame: " + activeFrame, "currentFrame: " + currentFrame, "frames.length: " + frames.length]);
         setCurrentFrame(activeFrame);
         callback(activeFrame);
       }, (1/fps)*1000);
     }
   }
   
+  // stop animation
   var stop = function() {
     clearInterval(animation);
     animation = null;
