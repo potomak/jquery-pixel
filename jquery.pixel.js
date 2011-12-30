@@ -459,7 +459,7 @@ var pixel = function() {
     animation = null;
   }
   
-  // ## moveRight()
+  // ## moveTop()
   //
   // Moves canvas top by one pixel.
   var moveTop = function() {
