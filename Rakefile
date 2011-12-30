@@ -2,8 +2,8 @@ require 'rubygems'
 require 'rake'
 require 'net/http'
 
-desc "Default: run doc"
-task :default => :doc
+desc "Default task is :compile"
+task :default => :compile
 
 desc "Generate documentation"
 task :doc do
@@ -13,8 +13,8 @@ task :doc do
   sh "docco #{library_path}"
 end
 
-desc "Compile library"
-task :compile do
+desc "Compile library, it depends on :doc task"
+task :compile => :doc do
   library_path = 'pixel.js'
   output_path = "#{library_path.gsub(/\.js$/, '')}.min.js"
   
