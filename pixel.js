@@ -1,6 +1,9 @@
 // Pixel is a javascript pixel drawing library.
 
-var pixel = function() {
+var PIXEL = function() {
+  // Global constants.
+  var TRANSPARENT = "rgba(0, 0, 0, 0)";
+  
   // Global variables.
   var debug        = false,
       matrix       = [],
@@ -50,7 +53,7 @@ var pixel = function() {
     
     for(var i = 0; i < matrix.length; i++) {
       for(var j = 0; j < matrix[i].length; j++) {
-        matrix[i][j] = "rgba(0, 0, 0, 0)";
+        matrix[i][j] = TRANSPARENT;
       }
     }
   }
@@ -85,7 +88,7 @@ var pixel = function() {
     
     for(var i = 0; i < m.length; i++) {
       for(var j = 0; j < m[i].length; j++) {
-        mString += ("rgba(0, 0, 0, 0)" == m[i][j] ? "0" : "X") + ", ";
+        mString += (TRANSPARENT == m[i][j] ? "0" : "X") + ", ";
       }
       
       mString += "\n";
@@ -155,8 +158,7 @@ var pixel = function() {
           break;
           
         case "clearPixel":
-          var transparent = "rgba(0, 0, 0, 0)",
-              startColor = drawPixel(x, y, transparent);
+          var startColor = drawPixel(x, y, TRANSPARENT);
           
           if(startColor != false) {
             history.undo.push(function() {
@@ -164,7 +166,7 @@ var pixel = function() {
             });
 
             history.action.push(function() {
-              drawPixel(x, y, transparent);
+              drawPixel(x, y, TRANSPARENT);
             });
           }
           
@@ -231,7 +233,7 @@ var pixel = function() {
   var getPixelColor = function(x, y) {
     var color = matrix[pixelify(x)][pixelify(y)];
     
-    return "rgba(0, 0, 0, 0)" == color ? "#ffffff" : color;
+    return TRANSPARENT == color ? "#ffffff" : color;
   }
   
   // ## fillPixels(x, y, color)
@@ -314,7 +316,7 @@ var pixel = function() {
       for(var i = 0; i < frames[onionFrame].length; i++) {
         for(var j = 0; j < frames[onionFrame][i].length; j++) {
           c = frames[onionFrame][i][j];
-          if(c != "rgba(0, 0, 0, 0)") {
+          if(c != TRANSPARENT) {
             components = c.match(/#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})/);
             c = "rgba(" +
                 new Number("0x" + components[1]) + ", " +

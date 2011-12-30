@@ -1,4 +1,4 @@
-# jQuery pixel
+# Pixel
 
 A pixel drawing library.
 
@@ -6,10 +6,14 @@ See a demo app using this library at [http://drawbang.com](http://drawbang.com) 
 
 ## Documentation
 
-To generate documentation using Docco run
+Generate documentation using Docco
 
-    docco jquery.pixel.js
+    rake doc
 
-or try a shortcut
+## Compiling
 
-   rake
+Compile library using Google Closure Compiler REST API
+
+    rake compile
+
+More info about Google Closure Compiler REST API at http://code.google.com/closure/compiler/docs/gettingstarted_api.html
