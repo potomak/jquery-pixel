@@ -684,6 +684,26 @@ var PIXEL = function() {
     });
   }
   
+  // ## copyFrameAt(index)
+  //
+  // Copies frame at `index` to current frame.
+  //
+  // `index` an integer representing an index of `frames` array.
+  var copyFrameAt = function(index) {
+    var startMatrix = copyMatrix(matrix),
+        start = (new Date()).getTime();
+    
+    matrix = copyMatrix(frames[index]);
+    
+    log("copyFrameAt " + index + ": " + ((new Date()).getTime()-start));
+    
+    draw();
+    
+    history.undo.push(function() {
+      draw(startMatrix);
+    });
+  }
+  
   return {
     init: init,
     clearCanvas: clearCanvas,
@@ -706,6 +726,7 @@ var PIXEL = function() {
     flipHorizontal: flipHorizontal,
     flipVertical: flipVertical,
     rotate: rotate,
+    copyFrameAt: copyFrameAt,
     log: log
   };
 }();
