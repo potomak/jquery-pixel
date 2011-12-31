@@ -571,6 +571,31 @@ var PIXEL = function() {
     });
   }
   
+  // ## rotate()
+  //
+  // Rotates canvas left by 90 degrees.
+  var rotate = function() {
+    var startMatrix = copyMatrix(matrix),
+        start = (new Date()).getTime();
+    
+    // For each column of pixels,
+    for(var i = 0; i < matrix.length; i++) {
+      // for each row of pixels,
+      for(var j = 0; j < matrix[i].length; j++) {
+        // swap each element to swap row with column.
+        matrix[i][j] = startMatrix[matrix[i].length-1 - j][i];
+      }
+    }
+    
+    log("rotate time: " + ((new Date()).getTime()-start));
+    
+    draw();
+    
+    history.undo.push(function() {
+      draw(startMatrix);
+    });
+  }
+  
   return {
     init: init,
     clearCanvas: clearCanvas,
@@ -593,6 +618,7 @@ var PIXEL = function() {
     moveTop: moveTop,
     flipHorizontal: flipHorizontal,
     flipVertical: flipVertical,
+    rotate: rotate,
     log: log
   };
 }();
