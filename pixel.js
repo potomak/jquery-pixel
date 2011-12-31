@@ -5,20 +5,36 @@ var PIXEL = function() {
   var TRANSPARENT = "rgba(0, 0, 0, 0)";
   
   // Global variables.
-  var debug        = false,
-      matrix       = [],
-      frames       = [],
-      animation    = null,
-      currentFrame = 0,
-      onionFrame   = null,
-      canvas       = null,
-      ctx          = null,
-      drawing      = false,
-      action       = "pixel",
-      pixelSize    = 20,
-      size         = 320,
-      gridColor    = "#eeeeee",
-      showGrid     = false,
+  var debug           = false,
+      matrix          = [],
+      frames          = [],
+      animation       = null,
+      currentFrame    = 0,
+      onionFrame      = null,
+      mainCanvas      = null,
+      previewCanvases = [],
+      // canvas       = null,
+      // ctx          = null,
+      drawing         = false,
+      action          = "pixel",
+      // pixelSize    = 20,
+      // size         = 320,
+      // gridColor    = "#eeeeee",
+      // showGrid     = false,
+      settings = {
+        previewCanvas: {
+          pixelSize: 1,
+          size:      16,
+          gridColor: "#eeeeee",
+          showGrid:  false
+        },
+        mainCanvas: {
+          pixelSize: 20,
+          size:      320,
+          gridColor: "#eeeeee",
+          showGrid:  false
+        }
+      },
       history = {
         action:  [],
         undo:    [],
@@ -26,15 +42,111 @@ var PIXEL = function() {
         redo:    []
       };
   
-  // ## init(canvas, debug)
+  // ## Canvas(canvas, settings)
   //
-  // Initializes pixel library.
+  // A canvas object.
   //
-  // `canvas` is a HTML5 canvas DOM element.<br/>
+  // `canvas` a canvas element.<br/>
+  // `settings` an object with settings to draw this canvas.
+  function Canvas(canvas, settings) {
+    // A canvas element.
+    this.canvas   = canvas;
+    
+    // Context element of `canvas`
+    this.ctx      = canvas.getContext("2d");
+    
+    // An object with canvas settings.
+    //
+    // Example settings:
+    //
+    //     {
+    //       pixelSize: 1,
+    //       size:      16,
+    //       gridColor: "#eeeeee",
+    //       showGrid:  false
+    //     }
+    this.settings = settings;
+    
+    // ## clearCanvas()
+    //
+    // Clears canvas.
+    this.clearCanvas = function() {
+      this.canvas.width = this.canvas.width;
+    }
+    
+    // ## drawGrid()
+    //
+    // Draws canvas grid.
+    this.drawGrid = function() {
+      var correction = 0.5;
+
+      if(this.settings.showGrid) {
+        for (var x = correction+this.settings.pixelSize; x < this.settings.size; x += this.settings.pixelSize) {
+          this.ctx.moveTo(x, 0);
+          this.ctx.lineTo(x, this.settings.size);
+          this.ctx.moveTo(0, x);
+          this.ctx.lineTo(this.settings.size, x);
+        }
+
+        this.ctx.strokeStyle = this.settings.gridColor;
+        this.ctx.stroke();
+      }
+    }
+    
+    // ## getDataURL()
+    //
+    // Returns canvas data url string as `image/png`.
+    this.getDataURL = function() {
+      return this.canvas.toDataURL("image/png");
+    }
+    
+    // ## draw(m)
+    //
+    // Draws canvas using `m` as bitmap data.
+    this.draw = function(m) {
+      this.clearCanvas();
+
+      // if(onionFrame != null && typeof frames[onionFrame] != 'undefined' && frames[onionFrame] != null) {
+      //   for(var i = 0; i < frames[onionFrame].length; i++) {
+      //     for(var j = 0; j < frames[onionFrame][i].length; j++) {
+      //       c = frames[onionFrame][i][j];
+      //       if(c != TRANSPARENT) {
+      //         components = c.match(/#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})/);
+      //         c = "rgba(" +
+      //             new Number("0x" + components[1]) + ", " +
+      //             new Number("0x" + components[2]) + ", " +
+      //             new Number("0x" + components[3]) + ", 0.5)";
+      //       }
+      //       ctx.fillStyle = c;
+      //       ctx.fillRect(i*pixelSize, j*pixelSize, pixelSize, pixelSize);
+      //     }
+      //   }
+      // }
+
+      for(var i = 0; i < m.length; i++) {
+        for(var j = 0; j < m[i].length; j++) {
+          this.ctx.fillStyle = m[i][j];
+          this.ctx.fillRect(i*this.settings.pixelSize, j*this.settings.pixelSize, this.settings.pixelSize, this.settings.pixelSize);
+        }
+      }
+
+      this.drawGrid();
+    }
+  }
+  
+  
+  // ## init(mainCanvas, previewCanvases, debug)
+  //
+  // Initializes Pixel library.
+  //
+  // `mainCanvas` is a HTML5 canvas elements.<br/>
+  // `previewCanvases` is an array of HTML5 canvas elements.<br/>
   // `debug` is a flag to override default debug settings.
-  var init = function(aCanvas, aDebug) {
-    canvas = aCanvas;
-    ctx = aCanvas.getContext("2d");
+  var init = function(aMainCanvas, aPreviewCanvases, aDebug) {
+    mainCanvas = new Canvas(aMainCanvas, settings.mainCanvas);
+    for(var i = 0; i < aPreviewCanvases.length; i++) {
+      previewCanvases[i] = new Canvas(aPreviewCanvases[i], settings.previewCanvas);
+    }
     typeof aDebug != 'undefined' ? debug = aDebug : null;
     
     initMatrix();
@@ -45,10 +157,11 @@ var PIXEL = function() {
   //
   // Initializes matrix values to transparent.
   var initMatrix = function() {
+    var length = settings.mainCanvas.size/settings.mainCanvas.pixelSize
     matrix = [];
     
-    for(var i = 0; i < size/pixelSize; i++) {
-      matrix.push(new Array(size/pixelSize));
+    for(var i = 0; i < length; i++) {
+      matrix.push(new Array(length));
     }
     
     for(var i = 0; i < matrix.length; i++) {
@@ -115,7 +228,8 @@ var PIXEL = function() {
   //
   // Clears canvas.
   var clearCanvas = function() {
-    canvas.width = canvas.width;
+    mainCanvas.clearCanvas();
+    previewCanvases[currentFrame].clearCanvas();
     frames[currentFrame] = null;
     initMatrix();
     initCanvas();
@@ -141,39 +255,44 @@ var PIXEL = function() {
   // Executes `action` at (`x`, `y`) with `color`.
   var doAction = function(x, y, color) {
     if(drawing) {
+      var coords = {
+        x: pixelify(x, settings.mainCanvas.pixelSize),
+        y: pixelify(y, settings.mainCanvas.pixelSize)
+      }
+      
       switch(action) {
         case "pixel":
-          var startColor = drawPixel(x, y, color);
+          var startColor = drawPixel(coords.x, coords.y, color);
           
           if(startColor != false) {
             history.undo.push(function() {
-              drawPixel(x, y, startColor);
+              drawPixel(coords.x, coords.y, startColor);
             });
 
             history.action.push(function() {
-              drawPixel(x, y, color);
+              drawPixel(coords.x, coords.y, color);
             });
           }
           
           break;
           
         case "clearPixel":
-          var startColor = drawPixel(x, y, TRANSPARENT);
+          var startColor = drawPixel(coords.x, coords.y, TRANSPARENT);
           
           if(startColor != false) {
             history.undo.push(function() {
-              drawPixel(x, y, startColor);
+              drawPixel(coords.x, coords.y, startColor);
             });
 
             history.action.push(function() {
-              drawPixel(x, y, TRANSPARENT);
+              drawPixel(coords.x, coords.y, TRANSPARENT);
             });
           }
           
           break;
           
         case "fill":
-          var startMatrix = fillPixels(x, y, color);
+          var startMatrix = fillPixels(coords.x, coords.y, color);
           
           if(startColor != false) {
             history.undo.push(function() {
@@ -181,7 +300,7 @@ var PIXEL = function() {
             });
 
             history.action.push(function() {
-              fillPixels(x, y, color)
+              fillPixels(coords.x, coords.y, color)
             });
           }
           
@@ -196,7 +315,10 @@ var PIXEL = function() {
   // ## pixelify(val)
   //
   // Returns quantized value of `val` by `pixelSize`.
-  var pixelify = function(val) {
+  //
+  // `val` a number.
+  // `pixelSize` a number representing *pixel size in pixels*
+  var pixelify = function(val, pixelSize) {
     var i = Math.floor(val/pixelSize);
     
     i >= matrix.length && (i = matrix.length-1);
@@ -209,12 +331,10 @@ var PIXEL = function() {
   //
   // Draws pixel at (`x`, `y`) of `color`.
   var drawPixel = function(x, y, color) {
-    var px = pixelify(x),
-        py = pixelify(y),
-        startColor = matrix[px][py];
+    var startColor = matrix[x][y];
     
     if(startColor != color) {
-      matrix[px][py] = color;
+      matrix[x][y] = color;
       draw();
       
       return startColor;
@@ -223,24 +343,22 @@ var PIXEL = function() {
     return false;
   }
   
-  // ## getPixelColor(x, y)
+  // ## getPixelColorAt(x, y)
   //
   // Returns color string at (`x`, `y`).
   //
   // Color string format:
   //
   //     /#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})/
-  var getPixelColor = function(x, y) {
-    var color = matrix[pixelify(x)][pixelify(y)];
-    
-    return TRANSPARENT == color ? "#ffffff" : color;
+  var getPixelColorAt = function(x, y) {
+    return TRANSPARENT == matrix[x][y] ? "#ffffff" : matrix[x][y];
   }
   
   // ## fillPixels(x, y, color)
   //
   // Fills pixels.
   var fillPixels = function(x, y, color) {
-    var startColor = getPixelColor(x, y);
+    var startColor = getPixelColorAt(x, y);
     
     if(startColor != color) {
       var startMatrix = copyMatrix(matrix),
@@ -260,83 +378,53 @@ var PIXEL = function() {
   // ## fillPixel(x, y, startColor, endColor)
   //
   // Recursive part of `fillPixels` function.
+  //
+  // `x`
+  // `y`
+  // `startColor` a hex representation of starting color.
+  // `endColor` a hex representation of target color.
   var fillPixel = function(x, y, startColor, endColor) {
-    var color = getPixelColor(x, y);
+    var color = getPixelColorAt(x, y);
     
-    if(color == startColor && x > 0 && y > 0 && x < size && y < size) {
-      matrix[pixelify(x)][pixelify(y)] = endColor;
+    if(color == startColor && x >= 0 && x < matrix.length && y >= 0 && y < matrix.length) {
+      matrix[x][y] = endColor;
       
-      fillPixel(x+pixelSize, y, startColor, endColor);
-      fillPixel(x-pixelSize, y, startColor, endColor);
-      fillPixel(x, y+pixelSize, startColor, endColor);
-      fillPixel(x, y-pixelSize, startColor, endColor);
+      fillPixel(x+1, y, startColor, endColor);
+      fillPixel(x-1, y, startColor, endColor);
+      fillPixel(x, y+1, startColor, endColor);
+      fillPixel(x, y-1, startColor, endColor);
     }
-  }
-
-  // ## drawGrid()
-  //
-  // Draws canvas grid.
-  var drawGrid = function() {
-    var correction = 0.5;
-    
-    if(showGrid) {
-      for (var x = correction+pixelSize; x < size; x += pixelSize) {
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, size);
-      }
-
-      for (var y = correction+pixelSize; y < size; y += pixelSize) {
-        ctx.moveTo(0, y);
-        ctx.lineTo(size, y);
-      }
-
-      ctx.strokeStyle = gridColor;
-      ctx.stroke();
-    }
-  }
-  
-  // ## getDataURL()
-  //
-  // Returns canvas data url string.
-  var getDataURL = function() {
-    return canvas.toDataURL("image/png");
   }
   
   // ## draw(m)
   //
-  // Draws canvas using `m` as matrix or `matrix` if `m` is `undefined`.
+  // Draws main canvas and preview canvas at `currentFrame` using `m` as matrix or
+  // global `matrix` if `m` is `undefined`.
   var draw = function(m) {
-    canvas.width = canvas.width;
+    typeof m == 'undefined' ? m = matrix : matrix = copyMatrix(m);
     
-    if(typeof m == 'undefined') {
-      m = matrix;
-    }
+    mainCanvas.clearCanvas();
+    previewCanvases[currentFrame].clearCanvas();
     
-    if(onionFrame != null && typeof frames[onionFrame] != 'undefined' && frames[onionFrame] != null) {
-      for(var i = 0; i < frames[onionFrame].length; i++) {
-        for(var j = 0; j < frames[onionFrame][i].length; j++) {
-          c = frames[onionFrame][i][j];
-          if(c != TRANSPARENT) {
-            components = c.match(/#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})/);
-            c = "rgba(" +
-                new Number("0x" + components[1]) + ", " +
-                new Number("0x" + components[2]) + ", " +
-                new Number("0x" + components[3]) + ", 0.5)";
-          }
-          ctx.fillStyle = c;
-          ctx.fillRect(i*pixelSize, j*pixelSize, pixelSize, pixelSize);
-        }
-      }
-    }
+    // if(onionFrame != null && typeof frames[onionFrame] != 'undefined' && frames[onionFrame] != null) {
+    //   for(var i = 0; i < frames[onionFrame].length; i++) {
+    //     for(var j = 0; j < frames[onionFrame][i].length; j++) {
+    //       c = frames[onionFrame][i][j];
+    //       if(c != TRANSPARENT) {
+    //         components = c.match(/#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})/);
+    //         c = "rgba(" +
+    //             new Number("0x" + components[1]) + ", " +
+    //             new Number("0x" + components[2]) + ", " +
+    //             new Number("0x" + components[3]) + ", 0.5)";
+    //       }
+    //       ctx.fillStyle = c;
+    //       ctx.fillRect(i*pixelSize, j*pixelSize, pixelSize, pixelSize);
+    //     }
+    //   }
+    // }
     
-    for(var i = 0; i < m.length; i++) {
-      for(var j = 0; j < m[i].length; j++) {
-        ctx.fillStyle = matrix[i][j] = m[i][j];
-        ctx.fillRect(i*pixelSize, j*pixelSize, pixelSize, pixelSize);
-      }
-    }
-    
-    drawGrid();
+    mainCanvas.draw(m);
+    previewCanvases[currentFrame].draw(m);
   }
   
   // ## getHistory()
@@ -602,7 +690,6 @@ var PIXEL = function() {
     setDraw: setDraw,
     setAction: setAction,
     doAction: doAction,
-    getDataURL: getDataURL,
     getHistory: getHistory,
     undo: undo,
     redo: redo,
