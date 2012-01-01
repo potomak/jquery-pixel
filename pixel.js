@@ -10,17 +10,13 @@ var PIXEL = function() {
       frames          = [],
       animation       = null,
       currentFrame    = 0,
-      onionFrame      = null,
+      /* NOTE: deprecated
+      onionFrame   = null,
+      */
       mainCanvas      = null,
       previewCanvases = [],
-      // canvas       = null,
-      // ctx          = null,
       drawing         = false,
       action          = "pixel",
-      // pixelSize    = 20,
-      // size         = 320,
-      // gridColor    = "#eeeeee",
-      // showGrid     = false,
       settings = {
         previewCanvas: {
           pixelSize: 1,
@@ -50,10 +46,10 @@ var PIXEL = function() {
   // `settings` an object with settings to draw this canvas.
   function Canvas(canvas, settings) {
     // A canvas element.
-    this.canvas   = canvas;
+    this.canvas = canvas;
     
     // Context element of `canvas`
-    this.ctx      = canvas.getContext("2d");
+    this.ctx = canvas.getContext("2d");
     
     // An object with canvas settings.
     //
@@ -106,22 +102,25 @@ var PIXEL = function() {
     this.draw = function(m) {
       this.clearCanvas();
 
-      // if(onionFrame != null && typeof frames[onionFrame] != 'undefined' && frames[onionFrame] != null) {
-      //   for(var i = 0; i < frames[onionFrame].length; i++) {
-      //     for(var j = 0; j < frames[onionFrame][i].length; j++) {
-      //       c = frames[onionFrame][i][j];
-      //       if(c != TRANSPARENT) {
-      //         components = c.match(/#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})/);
-      //         c = "rgba(" +
-      //             new Number("0x" + components[1]) + ", " +
-      //             new Number("0x" + components[2]) + ", " +
-      //             new Number("0x" + components[3]) + ", 0.5)";
-      //       }
-      //       ctx.fillStyle = c;
-      //       ctx.fillRect(i*pixelSize, j*pixelSize, pixelSize, pixelSize);
-      //     }
-      //   }
-      // }
+      /* NOTE: deprecated
+
+      if(onionFrame != null && typeof frames[onionFrame] != 'undefined' && frames[onionFrame] != null) {
+        for(var i = 0; i < frames[onionFrame].length; i++) {
+          for(var j = 0; j < frames[onionFrame][i].length; j++) {
+            c = frames[onionFrame][i][j];
+            if(c != TRANSPARENT) {
+              components = c.match(/#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})/);
+              c = "rgba(" +
+                  new Number("0x" + components[1]) + ", " +
+                  new Number("0x" + components[2]) + ", " +
+                  new Number("0x" + components[3]) + ", 0.5)";
+            }
+            ctx.fillStyle = c;
+            ctx.fillRect(i*pixelSize, j*pixelSize, pixelSize, pixelSize);
+          }
+        }
+      }
+      */
 
       for(var i = 0; i < m.length; i++) {
         for(var j = 0; j < m[i].length; j++) {
@@ -316,7 +315,7 @@ var PIXEL = function() {
   //
   // Returns quantized value of `val` by `pixelSize`.
   //
-  // `val` a number.
+  // `val` a number.<br/>
   // `pixelSize` a number representing *pixel size in pixels*
   var pixelify = function(val, pixelSize) {
     var i = Math.floor(val/pixelSize);
@@ -379,9 +378,9 @@ var PIXEL = function() {
   //
   // Recursive part of `fillPixels` function.
   //
-  // `x`
-  // `y`
-  // `startColor` a hex representation of starting color.
+  // `x`<br/>
+  // `y`<br/>
+  // `startColor` a hex representation of starting color.<br/>
   // `endColor` a hex representation of target color.
   var fillPixel = function(x, y, startColor, endColor) {
     if(x >= 0 && x < matrix[0].length && y >= 0 && y < matrix.length) {
@@ -406,22 +405,25 @@ var PIXEL = function() {
     mainCanvas.clearCanvas();
     previewCanvases[currentFrame].clearCanvas();
     
-    // if(onionFrame != null && typeof frames[onionFrame] != 'undefined' && frames[onionFrame] != null) {
-    //   for(var i = 0; i < frames[onionFrame].length; i++) {
-    //     for(var j = 0; j < frames[onionFrame][i].length; j++) {
-    //       c = frames[onionFrame][i][j];
-    //       if(c != TRANSPARENT) {
-    //         components = c.match(/#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})/);
-    //         c = "rgba(" +
-    //             new Number("0x" + components[1]) + ", " +
-    //             new Number("0x" + components[2]) + ", " +
-    //             new Number("0x" + components[3]) + ", 0.5)";
-    //       }
-    //       ctx.fillStyle = c;
-    //       ctx.fillRect(i*pixelSize, j*pixelSize, pixelSize, pixelSize);
-    //     }
-    //   }
-    // }
+    /* NOTE: deprecated
+    
+    if(onionFrame != null && typeof frames[onionFrame] != 'undefined' && frames[onionFrame] != null) {
+      for(var i = 0; i < frames[onionFrame].length; i++) {
+        for(var j = 0; j < frames[onionFrame][i].length; j++) {
+          c = frames[onionFrame][i][j];
+          if(c != TRANSPARENT) {
+            components = c.match(/#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})/);
+            c = "rgba(" +
+                new Number("0x" + components[1]) + ", " +
+                new Number("0x" + components[2]) + ", " +
+                new Number("0x" + components[3]) + ", 0.5)";
+          }
+          ctx.fillStyle = c;
+          ctx.fillRect(i*pixelSize, j*pixelSize, pixelSize, pixelSize);
+        }
+      }
+    }
+    */
     
     mainCanvas.draw(m);
     previewCanvases[currentFrame].draw(m);
@@ -508,6 +510,8 @@ var PIXEL = function() {
   // ## setOnionFrame(frame)
   //
   // Sets `frame` as onion frame and draws canvas.
+  //
+  // **Deprecation warning**
   var setOnionFrame = function(frame) {
     onionFrame = frame;
     draw();
@@ -516,6 +520,8 @@ var PIXEL = function() {
   // ## getCurrentOnionFrameId()
   //
   // Returns current onion frame index.
+  //
+  // **Deprecation warning**
   var getCurrentOnionFrameId = function() {
     return onionFrame;
   }
@@ -715,8 +721,10 @@ var PIXEL = function() {
     redo: redo,
     getFrame: getFrame,
     setCurrentFrame: setCurrentFrame,
+    /* NOTE: deprecated
     setOnionFrame: setOnionFrame,
     getCurrentOnionFrameId: getCurrentOnionFrameId,
+    */
     getCurrentFrame: getCurrentFrame,
     getCurrentFrameId: getCurrentFrameId,
     play: play,
