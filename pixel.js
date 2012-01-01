@@ -343,14 +343,14 @@ var PIXEL = function() {
     return false;
   }
   
-  // ## getPixelColorAt(x, y)
+  // ## getColorAt(x, y)
   //
   // Returns color string at (`x`, `y`).
   //
   // Color string format:
   //
   //     /#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})/
-  var getPixelColorAt = function(x, y) {
+  var getColorAt = function(x, y) {
     return TRANSPARENT == matrix[x][y] ? "#ffffff" : matrix[x][y];
   }
   
@@ -358,7 +358,7 @@ var PIXEL = function() {
   //
   // Fills pixels.
   var fillPixels = function(x, y, color) {
-    var startColor = getPixelColorAt(x, y);
+    var startColor = getColorAt(x, y);
     
     if(startColor != color) {
       var startMatrix = copyMatrix(matrix),
@@ -384,7 +384,7 @@ var PIXEL = function() {
   // `startColor` a hex representation of starting color.
   // `endColor` a hex representation of target color.
   var fillPixel = function(x, y, startColor, endColor) {
-    var color = getPixelColorAt(x, y);
+    var color = getColorAt(x, y);
     
     if(color == startColor && x >= 0 && x < matrix.length && y >= 0 && y < matrix.length) {
       matrix[x][y] = endColor;
