@@ -384,15 +384,15 @@ var PIXEL = function() {
   // `startColor` a hex representation of starting color.
   // `endColor` a hex representation of target color.
   var fillPixel = function(x, y, startColor, endColor) {
-    var color = getColorAt(x, y);
-    
-    if(color == startColor && x >= 0 && x < matrix.length && y >= 0 && y < matrix.length) {
-      matrix[x][y] = endColor;
-      
-      fillPixel(x+1, y, startColor, endColor);
-      fillPixel(x-1, y, startColor, endColor);
-      fillPixel(x, y+1, startColor, endColor);
-      fillPixel(x, y-1, startColor, endColor);
+    if(x >= 0 && x < matrix[0].length && y >= 0 && y < matrix.length) {
+      if(getColorAt(x, y) == startColor) {
+        matrix[x][y] = endColor;
+
+        fillPixel(x+1, y, startColor, endColor);
+        fillPixel(x-1, y, startColor, endColor);
+        fillPixel(x, y+1, startColor, endColor);
+        fillPixel(x, y-1, startColor, endColor);
+      }
     }
   }
   
