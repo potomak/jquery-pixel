@@ -451,6 +451,8 @@ var PIXEL = function() {
   // ## redo()
   //
   // Viceversa of `undo()`.
+  //
+  // **Deprecation warning**
   var redo = function() {
     if(history.redo.length > 0) {
       var todo = history.redo.pop();
@@ -718,7 +720,9 @@ var PIXEL = function() {
     doAction: doAction,
     getHistory: getHistory,
     undo: undo,
+    /* NOTE: deprecated
     redo: redo,
+    */
     getFrame: getFrame,
     setCurrentFrame: setCurrentFrame,
     /* NOTE: deprecated
