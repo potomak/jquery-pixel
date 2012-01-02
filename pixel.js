@@ -699,7 +699,7 @@ var PIXEL = function() {
     var startMatrix = copyMatrix(matrix),
         start = (new Date()).getTime();
     
-    matrix = copyMatrix(frames[index]);
+    matrix = copyMatrix(getFrame(index));
     
     log("copyFrameAt " + index + ": " + ((new Date()).getTime()-start));
     
