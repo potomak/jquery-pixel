@@ -5,7 +5,8 @@ var PIXEL = function() {
   var TRANSPARENT = "rgba(0, 0, 0, 0)";
   
   // Global variables.
-  var debug           = false,
+  var version         = '0.1',
+      debug           = false,
       matrix          = [],
       frames          = [],
       animation       = null,
