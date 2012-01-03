@@ -223,15 +223,32 @@ var PIXEL = function() {
     action = wantedAction;
   }
   
+  // ## clearCanvasAt(index)
+  //
+  // Clears canvas at `index`.
+  var clearCanvasAt = function(index) {
+    previewCanvases[index].clearCanvas();
+    
+    if(currentFrame == index) {
+      mainCanvas.clearCanvas();
+      frames[currentFrame] = null;
+      initMatrix();
+      initCanvas();
+    }
+  }
+  
   // ## clearCanvas()
   //
-  // Clears canvas.
+  // Clears current frame canvas.
   var clearCanvas = function() {
-    mainCanvas.clearCanvas();
-    previewCanvases[currentFrame].clearCanvas();
-    frames[currentFrame] = null;
-    initMatrix();
-    initCanvas();
+    clearCanvasAt(currentFrame);
+  }
+  
+  // ## removeFrame(index)
+  //
+  // Removes frame object from `frames` at `index`.
+  var removeFrame = function(index) {
+    frames.splice(index, 1);
   }
   
   // ## copyMatrix(m)
@@ -714,7 +731,9 @@ var PIXEL = function() {
   
   return {
     init: init,
+    clearCanvasAt: clearCanvasAt,
     clearCanvas: clearCanvas,
+    removeFrame: removeFrame,
     setDraw: setDraw,
     setAction: setAction,
     doAction: doAction,
